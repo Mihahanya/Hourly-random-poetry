@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Hourly poetry</title>
+
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600&
+																   family=Cormorant:wght@400;700&
+																   family=Lora:wght@400;700&
+																   family=Roboto+Slab:wght@400;700&
+																   family=Quattrocento:wght@400;700&
+																   family=Noto+Serif:wght@400;700&
+																   family=Merriweather:wght@400;700&display=swap">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+</head>
+
+<body>
+	<p class="name"></p>	
+	<p class="poem-text"></p>	
+	<p class="date"></p>	
+	<p class="author"></p>	
+</body>
+
+<script>
+
+function hashCode(str) {
+    let hash = 0;
+    for (let i = 0, len = str.length; i < len; i++) {
+        let chr = str.charCodeAt(i);
+        hash = (hash << 5) - hash + chr;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+}
+
+function display_poem(poems_data) {
+	var seed = hashCode((new Date().getTime()/1000/3600).toFixed())
+	var n = seed % (poems_data.length-1)
+
+	var fonts = [
+		"'Crimson Pro', serif",
+		"'Cormorant', serif",
+		"'Lora', serif",
+		"'Roboto Slab', serif",
+		"'Quattrocento', serif",
+		"'Noto Serif', serif",
+		"'Merriweather', serif"
+	];
+	
+	for (var element of document.getElementsByTagName('p')) {
+		element.style.fontFamily = fonts[n % fonts.length]
+	}
+
+	var current_poem_data = poems_data[n]
+	
+	console.log(current_poem_data)
+	document.getElementsByClassName('poem-text')[0].innerHTML = current_poem_data.text.replaceAll(/(\r)?\n/g, '<br>').replaceAll(/\b--\b/g, '—')
+	document.getElementsByClassName('name')[0].innerHTML = String(current_poem_data.name).replace('undefined', '<unnamed>')
+	document.getElementsByClassName('author')[0].innerHTML = String(current_poem_data.author).replace('undefined', '<unknown>')
+	document.getElementsByClassName('date')[0].innerHTML = String(current_poem_data.date_to).replace('undefined', '')
+	
+
+
+	document.body.style.opacity = 1;
+}
+
+
+var filePath = 'poetry.csv';
+var xhr = new XMLHttpRequest();
+
+xhr.onload = function() {
+    if (xhr.status === 200) {
+        var csvContent = xhr.responseText;
+		Papa.parse(csvContent, {
+			header: true, 
+			complete: function(results) {
+				display_poem(results.data)
+			}
+		});        
+    } 
+	else {
+        console.error('Ошибка при загрузке файла: ' + xhr.statusText);
+    }
+};
+
+xhr.onerror = function() {
+    console.error('Ошибка сети при загрузке файла');
+};
+
+xhr.open('GET', filePath, true);
+xhr.send();
+
+</script>
+
+
+<style>
+
+body {
+	font-family: 'Crimson Pro', serif;
+	transition: opacity 2s cubic-bezier(0.4, 0, 1, 1);
+	opacity: 0; 
+    margin: auto;
+    position: absolute;
+    transform: translate(-50%, 0);
+    left: 50%;
+    top: 10%;
+	padding-bottom: 10%;
+	width: max-content;
+	max-width: 100%;
+	background-color: #f9f9f9;
+}
+
+p {
+	color: #282828
+}
+
+.name {
+    text-align: center;
+    font-weight: bold;
+    font-size: 5.5vmin;
+    width: 70%;
+    margin: auto;
+}
+
+.author {
+	font-size: 3.5vmin;
+    text-align: right;
+}
+
+.date {
+	font-size: 3.5vmin;
+    text-align: left;
+	font-weight: bold;
+}
+
+.poem-text {
+	font-size: 5vmin;
+}
+
+</style>
+
+</html>
